@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model cache {
+  key        String @id @db.VarChar(255)
+  value      String @db.MediumText
+  expiration Int
+}
+
+model cache_locks {
+  key        String @id @db.VarChar(255)
+  owner      String @db.VarChar(255)
+  expiration Int
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid       String   @unique(map: "failed_jobs_uuid_unique") @db.VarChar(255)
+  connection String   @db.Text
+  queue      String   @db.Text
+  payload    String   @db.LongText
+  exception  String   @db.LongText
+  failed_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  migration String @db.VarChar(255)
+  batch     Int
+}
+
+model password_reset_tokens {
+  email      String    @id @db.VarChar(255)
+  token      String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+}
+
+model payment_categories {
+  id                BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  name              String              @unique(map: "payment_categories_name_unique") @db.VarChar(255)
+  color             String              @db.VarChar(255)
+  description       String?             @db.VarChar(255)
+  created_at        DateTime?           @db.Timestamp(0)
+  updated_at        DateTime?           @db.Timestamp(0)
+  payment_records   payment_records[]
+  payment_templates payment_templates[]
+}
+
+model payment_frequencies {
+  id                BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  name              String              @unique(map: "payment_frequencies_name_unique") @db.VarChar(255)
+  color             String              @db.VarChar(255)
+  description       String?             @db.VarChar(255)
+  created_at        DateTime?           @db.Timestamp(0)
+  updated_at        DateTime?           @db.Timestamp(0)
+  payment_records   payment_records[]
+  payment_templates payment_templates[]
+}
+
+model payment_periods {
+  id              BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  start_date      DateTime          @db.Timestamp(0)
+  end_date        DateTime          @db.Timestamp(0)
+  month           String            @db.VarChar(255)
+  year            Int
+  active          Boolean
+  description     String?           @db.VarChar(255)
+  created_at      DateTime?         @db.Timestamp(0)
+  updated_at      DateTime?         @db.Timestamp(0)
+  payment_records payment_records[]
+
+  @@index([start_date, end_date], map: "payment_periods_start_date_end_date_index")
+}
+
+model payment_platforms {
+  id                BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  name              String              @unique(map: "payment_platforms_name_unique") @db.VarChar(255)
+  description       String?             @db.VarChar(255)
+  image_url         String?             @db.VarChar(255)
+  color             String              @db.VarChar(255)
+  abbreviation      String              @db.VarChar(255)
+  created_at        DateTime?           @db.Timestamp(0)
+  updated_at        DateTime?           @db.Timestamp(0)
+  payment_records   payment_records[]
+  payment_templates payment_templates[]
+}
+
+model payment_records {
+  id                   BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  name                 String              @db.VarChar(255)
+  billing_date         DateTime            @db.Timestamp(0)
+  payment_date         DateTime            @db.Timestamp(0)
+  due_date             DateTime            @db.Timestamp(0)
+  currency             String              @db.VarChar(3)
+  amount_usd           Float
+  amount_clp           Float
+  payment_period_id    BigInt              @db.UnsignedBigInt
+  payment_platform_id  BigInt              @db.UnsignedBigInt
+  payment_frequency_id BigInt              @db.UnsignedBigInt
+  payment_category_id  BigInt              @db.UnsignedBigInt
+  image_url            String?             @db.VarChar(255)
+  description          String?             @db.VarChar(255)
+  created_at           DateTime?           @db.Timestamp(0)
+  updated_at           DateTime?           @db.Timestamp(0)
+  monitored            Boolean             @default(false)
+  payment_categories   payment_categories  @relation(fields: [payment_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "payment_records_payment_category_id_foreign")
+  payment_frequencies  payment_frequencies @relation(fields: [payment_frequency_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "payment_records_payment_frequency_id_foreign")
+  payment_periods      payment_periods     @relation(fields: [payment_period_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "payment_records_payment_period_id_foreign")
+  payment_platforms    payment_platforms   @relation(fields: [payment_platform_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "payment_records_payment_platform_id_foreign")
+
+  @@index([payment_category_id], map: "payment_records_payment_category_id_foreign")
+  @@index([payment_frequency_id], map: "payment_records_payment_frequency_id_foreign")
+  @@index([payment_period_id], map: "payment_records_payment_period_id_foreign")
+  @@index([payment_platform_id], map: "payment_records_payment_platform_id_foreign")
+}
+
+model payment_templates {
+  id                   BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  name                 String              @db.VarChar(255)
+  billing_date         DateTime            @db.Timestamp(0)
+  due_date             DateTime            @db.Timestamp(0)
+  currency             String              @db.VarChar(3)
+  amount_usd           Float
+  amount_clp           Float
+  payment_platform_id  BigInt              @db.UnsignedBigInt
+  payment_frequency_id BigInt              @db.UnsignedBigInt
+  payment_category_id  BigInt              @db.UnsignedBigInt
+  monitored            Boolean             @default(false)
+  description          String?             @db.VarChar(255)
+  created_at           DateTime?           @db.Timestamp(0)
+  updated_at           DateTime?           @db.Timestamp(0)
+  payment_categories   payment_categories  @relation(fields: [payment_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "payment_templates_payment_category_id_foreign")
+  payment_frequencies  payment_frequencies @relation(fields: [payment_frequency_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "payment_templates_payment_frequency_id_foreign")
+  payment_platforms    payment_platforms   @relation(fields: [payment_platform_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "payment_templates_payment_platform_id_foreign")
+
+  @@index([payment_category_id], map: "payment_templates_payment_category_id_foreign")
+  @@index([payment_frequency_id], map: "payment_templates_payment_frequency_id_foreign")
+  @@index([payment_platform_id], map: "payment_templates_payment_platform_id_foreign")
+}
+
+model personal_access_tokens {
+  id             BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  tokenable_type String    @db.VarChar(255)
+  tokenable_id   BigInt    @db.UnsignedBigInt
+  name           String    @db.VarChar(255)
+  token          String    @unique(map: "personal_access_tokens_token_unique") @db.VarChar(64)
+  abilities      String?   @db.Text
+  last_used_at   DateTime? @db.Timestamp(0)
+  expires_at     DateTime? @db.Timestamp(0)
+  created_at     DateTime? @db.Timestamp(0)
+  updated_at     DateTime? @db.Timestamp(0)
+
+  @@index([tokenable_type, tokenable_id], map: "personal_access_tokens_tokenable_type_tokenable_id_index")
+}
+
+model telescope_entries {
+  sequence                BigInt                   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid                    String                   @unique(map: "telescope_entries_uuid_unique") @db.Char(36)
+  batch_id                String                   @db.Char(36)
+  family_hash             String?                  @db.VarChar(255)
+  should_display_on_index Boolean                  @default(true)
+  type                    String                   @db.VarChar(20)
+  content                 String                   @db.LongText
+  created_at              DateTime?                @db.DateTime(0)
+  telescope_entries_tags  telescope_entries_tags[] @ignore
+
+  @@index([batch_id], map: "telescope_entries_batch_id_index")
+  @@index([created_at], map: "telescope_entries_created_at_index")
+  @@index([family_hash], map: "telescope_entries_family_hash_index")
+  @@index([type, should_display_on_index], map: "telescope_entries_type_should_display_on_index_index")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model telescope_entries_tags {
+  entry_uuid        String            @db.Char(36)
+  tag               String            @db.VarChar(255)
+  telescope_entries telescope_entries @relation(fields: [entry_uuid], references: [uuid], onDelete: Cascade, onUpdate: NoAction, map: "telescope_entries_tags_entry_uuid_foreign")
+
+  @@index([entry_uuid, tag], map: "telescope_entries_tags_entry_uuid_tag_index")
+  @@index([tag], map: "telescope_entries_tags_tag_index")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model telescope_monitoring {
+  tag String @db.VarChar(255)
+
+  @@ignore
+}
+
+model users {
+  id                BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  name              String    @db.VarChar(255)
+  email             String    @unique(map: "users_email_unique") @db.VarChar(255)
+  email_verified_at DateTime? @db.Timestamp(0)
+  password          String    @db.VarChar(255)
+  remember_token    String?   @db.VarChar(100)
+  created_at        DateTime? @db.Timestamp(0)
+  updated_at        DateTime? @db.Timestamp(0)
+}
