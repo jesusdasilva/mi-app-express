@@ -8,6 +8,7 @@ const paymentCategoriesRoutes_1 = __importDefault(require("./src/api/routes/paym
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+app.disable('x-powered-by');
 app.use(express_1.default.json());
 app.use(paymentCategoriesRoutes_1.default);
 const PORT = process.env.PORT || 3000;

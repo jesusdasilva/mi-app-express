@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
+app.disable('x-powered-by');
 
 app.use(express.json()); 
 app.use(paymentCategoriesRoutes);
